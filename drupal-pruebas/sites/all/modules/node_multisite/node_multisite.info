@@ -1,0 +1,10 @@
+;$Id$
+
+name = Node multisite
+description = Te permite crear nodos que son especificos para cada multisite
+core = 7.x
+package = Drupal 7 Development
+files[] = node_multisite.module
+
+;dependencies[] = autoload
+;php = 5.2

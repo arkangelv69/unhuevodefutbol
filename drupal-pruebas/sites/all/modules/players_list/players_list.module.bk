@@ -1,0 +1,159 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Muestra una lista de todos los judadores de un equipo
+*/
+
+/**
+ * Acceso a la base de datos
+ */
+
+/**
+ * Hook_menu
+ */
+
+function players_list_menu() {
+  $items = array();
+  $items['admin/config/development/list'] = array(
+    'title' => 'List players',
+    'description' => 'List players of my team',
+    'page callback' => 'main_table',
+    //'page arguments' => array('players_list_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+
+function players_list_select() {
+  global $conf;
+  global $user;
+  $name = $conf['name'];
+  $sid_user = get_sid_user($user->uid);
+
+  $query = db_select('users', 'n')
+    ->fields('n', array('name', 'mail', 'uid'))
+    ->condition('sid', $sid_user)
+    ->orderBy('name', 'DESC')
+    ->addTag('node_access')
+    ->execute();
+
+  return $query;
+}
+
+function players_list_form($form, &$form_state) {
+  $result = players_list_select();
+  $items = array();
+  foreach ($result as $node) {
+    $items[] = array(
+      'data' => array(
+        '#theme' => 'players_list_item',
+        '#node' => $node,
+      ),
+      'class' => array('node-' . $node->uid),
+    );
+  }
+  if (!empty($items)) {
+
+    $form['content']['list'] = array(
+      '#title' => t('prueba'),
+      '#theme' => 'item_list__players_list',
+      '#items' => $items,
+      '#type' => 'ul',
+      '#pre_render' => array('players_list_item_child_render'),
+    );
+  }
+  $form['delete'] = array(
+    '#type' => 'button',
+    '#value' => t('Eliminar'),
+    '#name' => 'ajax',
+    '#weight' => 19,
+    '#ajax' => array(
+      'callback' => 'replace_prueba',
+      'wrapper' => 'prueba',
+    ),
+  );
+  $form['replace_textfield'] = array(
+    '#type' => 'textfield',
+    '#title' => t("The default value will be changed"),
+    '#description' => t("Say something about why you chose") . "'" .
+      (!empty($form_state['values']['changethis'])
+      ? $form_state['values']['changethis'] : t("Not changed yet")) . "'",
+    '#prefix' => '<div id="prueba">',
+    '#suffix' => '</div>',
+    );
+  return $form;
+}
+
+function players_list_item_child_render($elements){
+  foreach (array_keys($elements['#items']) AS $key) {
+    if (is_array($elements['#items'][$key]['data'])) {
+      $elements['#items'][$key]['data'] = drupal_render($elements['#items'][$key]['data']);
+    }
+  }
+  return $elements;
+}
+
+function players_list_theme($existing, $type, $theme, $path)
+{
+  return array(
+    'players_list_item' => array(
+      'variables' => array('node'=>NULL),
+      'template' => 'players-list-item',
+    ),
+  );
+}
+
+function get_user_uid($username)
+{    
+    // Function that returns the uid based on the username given
+    $query = db_select('users', 'n')
+    ->fields('n', array('uid'))
+    ->condition('name', $username)
+    ->addTag('node_access')
+    ->execute();
+
+    foreach ($query as $value) {
+      return $value->uid;
+    }
+}
+
+/**
+ * Preprocesses single blog block item variables.
+ */
+function template_preprocess_players_list_item(&$variables,$hook) {
+  $node = $variables['node'];
+  //print_r($variables);
+
+  $account = get_user_uid($node->name);
+  $sid_user = get_sid_user($account);
+  if($sid_user == 0){
+    $sid_url = '';
+  }else{
+    $sid_url = $sid_user.'/';
+  }
+
+  // Create a renderable array for the title. 
+  $variables['name'] = array(
+    '#type'  => 'link',
+    '#title' => $node->name,
+    '#href'  => $sid_url.'user/' . $account,
+    '#attributes' => array('class' => array('links', 'inline'), 'target'=>array('_blank')),
+  );
+  $variables['delete'] = array(
+    '#type' => 'button',
+    '#value' => t('Eliminar'),
+    '#ajax' => array(
+      'callback' => 'replace_prueba',
+      'wrapper' => 'prueba',
+    ),
+  );
+}
+
+function replace_prueba() {
+  return 'hola';
+}

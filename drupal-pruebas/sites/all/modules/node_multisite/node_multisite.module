@@ -1,0 +1,206 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Modulo que controla la lógica de negocio
+*/
+function node_multisite_help($path, $arg) {
+  if ($path == 'admin/help#node_multisite') {
+    return t('Un modulo que te permite crear nodos especificos para cada site.');
+  }
+}
+/**
+ * Hook user presave
+ * Cada vez que se reguistre un usuario se vereficara si ha sido invitado y pertenece a un equipo,
+ * Si pertenece a un equipo se le añadira el sid del equipo
+ * Si no pertenece a ningun equipo se le añadira el sid -1
+ * En base a esto habrá se concederán los permisos para ver o editar lo nodos.
+ */
+
+function node_multisite_user_insert(&$edit, $account, $category) {
+  $email = $account->mail;
+  print_r($email);
+  $query = db_select('transfers','n')
+    ->fields('n',array('sid'))
+    ->condition('email', $email , '=')
+    ->addTag('node_access')
+    ->execute();
+  $result = $query->fetchField();
+  print_r($result);
+  if($result != 0 && isset($result)){
+    $sid = $result;
+    db_update('transfers')
+    ->fields(array('state' => 1,))
+    ->condition('email', $email , '=')
+    ->execute();
+  }else{
+    $sid = -1;
+  }
+  db_update('users')
+    ->fields(array('sid' => $sid,))
+    ->condition('uid', $account->uid , '=')
+    ->execute();
+}
+
+function node_multisite_form_user_register_form_alter(&$form, &$form_state, $form_id) {
+    if($_GET['email']){
+      $form['account']['mail']['#value'] = $_GET['email'];
+    }
+}
+
+/**
+ *Common functions
+ */
+
+function get_sid($name){
+  $query = db_select('sites','n')
+    ->fields('n',array('sid'))
+    ->condition('name', $name , '=')
+    ->addTag('node_access')
+    ->execute();
+  foreach($query as $result){
+    return $result->sid;
+  }
+}
+
+function get_sid_user($user){
+  $query = db_select('users','n')
+    ->fields('n',array('sid'))
+    ->condition('uid', $user , '=')
+    ->addTag('node_access')
+    ->execute();
+  foreach($query as $result){
+    return $result->sid;
+  }
+}
+
+function get_name_site($sid){
+  $query = db_select('sites','n')
+    ->fields('n',array('name'))
+    ->condition('sid', $sid , '=')
+    ->addTag('node_access')
+    ->execute();
+  foreach($query as $result){
+    return $result->name;
+  }
+}
+
+
+/*
+ * hook node insert
+ * Cada vez que añadimos un nodo le añadimos los permisos nuevos
+ * Controla la visulaizacion en función del site y también los permisos para editar un nodo.
+ */
+
+function node_multisite_node_insert($node) {
+  global $conf;
+  $name = $conf['name'];
+  $sid = get_sid($name);
+  if($sid != 0){
+    db_update('node')
+      ->fields(array(
+      'sid' => $sid,
+    ))
+      ->condition('nid', $node->nid , '=')
+      ->addTag('node_access')
+      ->execute();
+  }
+}
+
+/*function node_multisite_node_grants($account, $op) {
+  
+  global $conf;
+  $name = $conf['name'];
+  if(isset($account->uid)){
+    $user_uid = $account->uid;
+    $sid_user = get_sid_user($account->uid);
+    $sid_site = get_sid($name);
+  }else{
+    $user_uid = 0;
+    $sid_user = 0;
+    $sid_site = 0;
+  }
+
+  // First grant a grant to the author for own content.
+  $grants['node_access_default'] = array($sid_site);
+
+  // Then, if "access any private content" is allowed to the account,
+  // grant view, update, or delete as necessary.
+  if ($op == 'view') {
+    $grants['node_access_view'] = array($sid_site);
+  }
+
+  if (($op == 'update' || $op == 'delete')) {
+    $grants['node_access_edit'] = array($sid_site.$user_uid);
+  }
+
+  return $grants;
+}
+
+function node_multisite_node_access_records($node) {
+  // We only care about the node if it's been marked private. If not, it is
+  // treated just like any other node and we completely ignore it.
+    global $conf;
+    $name = $conf['name'];
+    $sid_user = get_sid_user($node->uid);
+
+    $grants = array();
+    $grants[] = array(
+      'realm' => 'node_access_default', 
+      'gid' => 0, 
+      'grant_view' => 1,
+      'grant_update' => 0, 
+      'grant_delete' => 0, 
+      'priority' => 0,
+    );
+    $grants[] = array(
+      'realm' => 'node_access_view', 
+      'gid' => $sid_user, 
+      'grant_view' => 1,
+      'grant_update' => 0, 
+      'grant_delete' => 0, 
+      'priority' => 0,
+    );
+    $grants[] = array(
+      'realm' => 'node_access_edit', 
+      'gid' => $sid_user.$node->uid, 
+      'grant_view' => 1,
+      'grant_update' => 1, 
+      'grant_delete' => 1, 
+      'priority' => 0,
+    );
+    return $grants;
+}*/
+
+/**
+ * Hook url outbound alter
+ * Modifica las url's dependiendo de la página del equipo en la que estes
+ */
+
+function node_multisite_url_outbound_alter(&$path, &$options, $original_path) {
+  global $conf;
+  global $base_root;
+  global $user;
+  $name = $conf['name'];
+  if(isset($user->uid)){
+    $sid_user = get_sid_user($user->uid);
+  }
+  $sid_site = get_sid($name);
+
+  if($user->uid != 1 && $sid_user != $sid_site && isset($sid_user)){
+    $name_site_user = get_name_site($sid_user);
+    if(preg_match('|^admin/([a-z]+)|', $path, $matches)){
+      $path = $base_root.'/'.$name_site_user.'/admin/'.$matches[1];
+      $options['external'] = TRUE; 
+    }
+    if(preg_match('|^node/add/([a-z]+)|', $path, $matches)){
+      $path = $base_root.'/'.$name_site_user.'/node/add/'.$matches[1];
+      $options['external'] = TRUE; 
+    }
+    if(preg_match('|^user/([0-9]+)$|', $path, $matches)){
+      $path = $base_root.'/'.$name_site_user.'/user/'.$matches[1];
+      $options['external'] = TRUE; 
+    }
+  }
+}

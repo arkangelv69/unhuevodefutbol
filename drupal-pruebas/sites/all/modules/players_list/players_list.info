@@ -1,0 +1,10 @@
+;$Id$
+
+name = List player
+description = Muestra una lista de todos los jugadores de un equipo
+core = 7.x
+package = Drupal 7 Development
+files[] = players_list.module
+
+;dependencies[] = autoload
+;php = 5.2
