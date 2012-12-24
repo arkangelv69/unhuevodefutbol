@@ -1,0 +1,145 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * A module what to create a new number in the site.
+*/
+function unhuevodefutbol_help($path, $arg) {
+  if ($path == 'admin/help#unhuevodefutbol') {
+    return t('A module to create a new number in the site.');
+  }
+}
+
+function unhuevodefutbol_menu() {
+  $items = array();
+
+  $items['node/%team'] = array(
+    'title' => 'team',
+    'description' => 'Here you can put the description and the history about your team',
+    'access arguments' => array('edit setting team'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'unhuevodefutbol.page.inc',
+  );
+
+  $items['admin/leagues'] = array(
+    'title' => 'leagues',
+    'description' => 'leagues manage, You can add league and view them',
+    'page callback' => 'unhf_teams_list',
+    'page arguments' => array(1),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/players'] = array(
+    'title' => 'players',
+    'description' => 'View list, add and delete players',
+    'page callback' => 'unhf_players_team',
+    'page arguments' => array(1),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+function unhuevodefutbol_permission() {
+  return array(
+    'edit setting team' => array(
+      'title' => t('edit setting team'), 
+      'description' => t('edit setting team.'),
+    ),
+  );
+}
+
+function unhf_desciption_team($form, &$form_state) {
+  /*// Number
+  $form['bbdd_data'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Datos de conexión con la base de datos'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['bbdd_data']['new_form-bbdd'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Nombre de la base de datos'),
+    '#size' => 10,
+    '#maxlength' => 20,
+    '#description' => t('Por su seguridad indique a la base de datos que quiere conectar'),
+    '#required' => TRUE,
+    '#attributes' => array('autocomplete'=>'off'),
+    '#group' => 'bbdd_data',
+  );
+  // Number
+  $form['bbdd_data']['new_form-user'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Nombre de usuario'),
+    '#size' => 10,
+    '#maxlength' => 20,
+    '#description' => t('Por su seguridad indique el nombre de usuario de la base de datos'),
+    '#required' => TRUE,
+    '#attributes' => array('autocomplete'=>'off'),
+    '#group' => 'bbdd_data',
+  );
+  // Number
+  $form['bbdd_data']['new_form-pass'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Contraseña de la base de datos'),
+    '#size' => 10,
+    '#maxlength' => 20,
+    '#description' => t('Introduzca la password de la base de datos'),
+    '#required' => TRUE,
+    '#attributes' => array('autocomplete'=>'off'),
+    '#group' => 'bbdd_data',
+  );*/
+  // Number
+  $form['new_form-team'] = array(
+    '#type' => 'textfield',
+    '#title' => t('New team'),
+    '#size' => 10,
+    '#maxlength' => 4,
+    '#description' => t('the name for the new team'),
+    '#required' => TRUE,
+  );
+  // Submit button 
+  $form['submit'] = array( 
+    '#type' => 'submit', 
+    '#value' => t('Create new number'), 
+  );
+
+  return $form;
+}
+
+function unhuevodefutbol_form_submit($form, &$form_state) {
+  $number = $form_state['values']['new_form-number'];
+  $bbdd = $form_state['values']['new_form-bbdd'];
+  $user = $form_state['values']['new_form-user'];
+  $pass = $form_state['values']['new_form-pass'];
+  create_tables($number);
+  //insert_data($number);
+  create_directory($number);
+  create_setting_file($number,$date,$year,$bbdd,$user,$pass);
+}
+
+/**
+ * General function
+ */
+
+function team_to_arg($arg) {
+  return 13;
+  global $user;
+  if( is_admin_team() ) {
+    $arg = get_nid_description_general_for_aid( $user->uid );
+    return $arg;
+  }else{
+    return false;
+  }
+}
+
+function is_admin_team() {
+
+}
+
+function get_nid_description_general_for_aid() {
+
+}

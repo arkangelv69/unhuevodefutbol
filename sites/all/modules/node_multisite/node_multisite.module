@@ -20,14 +20,12 @@ function node_multisite_help($path, $arg) {
 
 function node_multisite_user_insert(&$edit, $account, $category) {
   $email = $account->mail;
-  print_r($email);
   $query = db_select('transfers','n')
     ->fields('n',array('sid'))
     ->condition('email', $email , '=')
     ->addTag('node_access')
     ->execute();
   $result = $query->fetchField();
-  print_r($result);
   if($result != 0 && isset($result)){
     $sid = $result;
     db_update('transfers')

@@ -1,0 +1,12 @@
+;$Id$
+
+name = unhuevodefutbol
+description = add table and code necesary to create the sit the football.
+core = 7.x
+package = Drupal 7 Development
+files[] = unhuevodefutbol.module
+files[] = unhuevodefutbol.install
+files[] = unhuevodefutbol.page.inc
+
+;dependencies[] = autoload
+;php = 5.2

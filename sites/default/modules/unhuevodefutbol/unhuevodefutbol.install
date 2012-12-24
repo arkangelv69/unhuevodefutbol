@@ -1,0 +1,61 @@
+<?php
+
+function unhuevodefutbol_schema() {
+  $schema['1hf_teams'] = array(
+    'description' => 'Stores information about the register teams',
+    'fields' => array(
+      'tid' => array(
+        'description' => 'The primary identifier for an team.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'The name team',
+        'type' => 'varchar',
+        'length' => 150,
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'alias' => array(
+        'description' => 'The path team',
+        'type' => 'varchar',
+        'length' => 150,
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('tid'),
+  );
+
+  $schema['1hf_users'] = array(
+    'description' => 'relates a user with his team',
+    'fields' => array(
+      'tid' => array(
+        'description' => 'The {artwork} this version belongs to.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'uid' => array(
+        'description' => 'The primary identifier for this version.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'indexes' => array(
+      'tid' => array('tid'),
+    ),
+    'foreign keys' => array(
+      '1hf_teams' => array(
+        'table' => '1hf_teams',
+        'columns' => array(
+          'tid' => 'tid',
+        ),
+      ),
+    ),
+  );
+
+  return $schema;
+}
