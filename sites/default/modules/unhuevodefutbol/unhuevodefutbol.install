@@ -1,7 +1,7 @@
 <?php
 
 function unhuevodefutbol_schema() {
-  $schema['1hf_teams'] = array(
+  $schema['unhf_teams'] = array(
     'description' => 'Stores information about the register teams',
     'fields' => array(
       'tid' => array(
@@ -27,18 +27,18 @@ function unhuevodefutbol_schema() {
     'primary key' => array('tid'),
   );
 
-  $schema['1hf_users'] = array(
+  $schema['unhf_users'] = array(
     'description' => 'relates a user with his team',
     'fields' => array(
       'tid' => array(
-        'description' => 'The {artwork} this version belongs to.',
+        'description' => 'team identifier',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
       ),
       'uid' => array(
-        'description' => 'The primary identifier for this version.',
+        'description' => 'user identifier',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -48,8 +48,8 @@ function unhuevodefutbol_schema() {
       'tid' => array('tid'),
     ),
     'foreign keys' => array(
-      '1hf_teams' => array(
-        'table' => '1hf_teams',
+      'unhf_teams' => array(
+        'table' => 'unhf_teams',
         'columns' => array(
           'tid' => 'tid',
         ),

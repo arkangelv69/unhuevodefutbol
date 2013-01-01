@@ -14,12 +14,46 @@ function unhuevodefutbol_help($path, $arg) {
 function unhuevodefutbol_menu() {
   $items = array();
 
+  //spectator
+  $items['user/search-team'] = array(
+    'title' => 'Search team',
+    'description' => 'you can look for a team on the sign',
+    'page callback' => 'unhf_search_team',
+    'page arguments' => array(1),
+    'access arguments' => array('search to sign up'),
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'user-menu',
+  );
+
+  $items['user/create-team'] = array(
+    'title' => 'Create team',
+    'description' => 'create your own team',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('unhf_create_team'),
+    'access arguments' => array('create your own team'),
+    'theme callback' => 'administrative_theme',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'user-menu',
+    'context' => MENU_CONTEXT_INLINE,
+    'file' => 'unhuevodefutbol.create_team.inc',
+  );
+
+  $items['user/deals'] = array(
+    'title' => 'Deals',
+    'description' => 'deals to sign up for a team',
+    'page callback' => 'unhf_deals',
+    'page arguments' => array(1),
+    'access arguments' => array('view deals'),
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'user-menu',
+  );
+
+  //manager
   $items['node/%team'] = array(
     'title' => 'team',
     'description' => 'Here you can put the description and the history about your team',
     'access arguments' => array('edit setting team'),
     'type' => MENU_NORMAL_ITEM,
-    'file' => 'unhuevodefutbol.page.inc',
   );
 
   $items['admin/leagues'] = array(
@@ -48,6 +82,18 @@ function unhuevodefutbol_permission() {
     'edit setting team' => array(
       'title' => t('edit setting team'), 
       'description' => t('edit setting team.'),
+    ),
+    'search to sign up' => array(
+      'title' => t('search to sign up'), 
+      'description' => t('search to sign up.'),
+    ),
+    'create your own team' => array(
+      'title' => t('create your own team'), 
+      'description' => t('create your own team.'),
+    ),
+    'view deals' => array(
+      'title' => t('view deals'), 
+      'description' => t('view deals.'),
     ),
   );
 }
@@ -122,6 +168,31 @@ function unhuevodefutbol_form_submit($form, &$form_state) {
 }
 
 /**
+ *Create acount in de site
+ */
+function unhuevodefutbol_user_insert(&$edit, $account, $category){
+  //When you create a new account in the site. This get the spectator rol
+  $nid = db_insert('users_roles')
+  ->fields(array(
+    'uid' => $account->uid,
+    'rid' => 5
+  ))
+  ->execute();
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function unhuevodefutbol_admin_paths() {
+  $paths = array(
+    'user/create-team' => TRUE,
+    'user/search-team' => TRUE,
+    'user/deals' => TRUE,
+  );
+  return $paths;
+}
+
+/**
  * General function
  */
 
@@ -140,6 +211,55 @@ function is_admin_team() {
 
 }
 
+function is_player_team() {
+
+}
+
+function is_new_user_a_signing($mail) {
+  // Function that returns the uid based on the username given
+  $query = db_select('unhf_market', 'n')
+  ->fields('n', array('mid'))
+  ->condition('mail', $mail)
+  ->addTag('node_access')
+  ->execute();
+  $count = $query->rowCount();
+
+  //($count > 0) ? return true : return false;
+
+}
+
 function get_nid_description_general_for_aid() {
 
+}
+
+function get_url_absolute_player($username) {
+  // get url absolute to the user account
+  global $base_root;
+  $account = get_user_uid($username);
+  $sid_user = get_sid_user($account);
+  if($sid_user == 0){
+    $sid_url = '';
+  }else{
+    $sid_url = $sid_user.'/';
+  }
+  return $base_root.'/'.$sid_url.'user/'.$account;
+}
+
+function get_user_uid($username)
+{    
+  // Function that returns the uid based on the username given
+  $query = db_select('users', 'n')
+  ->fields('n', array('uid'))
+  ->condition('name', $username)
+  ->addTag('node_access')
+  ->execute();
+  $data = $query->fetchObject();
+
+  return $data->uid;
+
+}
+
+function administrative_theme() {
+  $admin_theme = variable_get('admin_theme', 0);
+  return $admin_theme;
 }

@@ -170,7 +170,7 @@ function theme_ea_options_theme($variables) {
   $row = array();
   $i = 0;
   foreach ($result as $node) {
-    $url = get_url_player($node->name);
+    $url = get_url_absolute_player($node->name);
     $row[] = array(
       array('data' => l( $node->name , $url , array('attributes' => array('class' => 'autor', 'target' => '_blank')))),
       array('data' => $node->mail),
@@ -199,35 +199,9 @@ function players_list_theme($existing, $type, $theme, $path){
 }
 
 function insert_transfers() {
-  db_insert('transfers')
-    ->fields(array('email' => $email ,'state' => 0, 'sid' => $sid_admin))
+  db_insert('unhf_market')
+    ->fields(array('mail' => $email ,'state' => 0, 'sid' => $sid_admin))
     ->execute();
-}
-
-function get_url_player($username) {
-  global $base_root;
-  $account = get_user_uid($username);
-  $sid_user = get_sid_user($account);
-  if($sid_user == 0){
-    $sid_url = '';
-  }else{
-    $sid_url = $sid_user.'/';
-  }
-  return $base_root.'/'.$sid_url.'user/'.$account;
-}
-
-function get_user_uid($username)
-{    
-    // Function that returns the uid based on the username given
-    $query = db_select('users', 'n')
-    ->fields('n', array('uid'))
-    ->condition('name', $username)
-    ->addTag('node_access')
-    ->execute();
-
-    foreach ($query as $value) {
-      return $value->uid;
-    }
 }
 
 function replace_prueba() {
